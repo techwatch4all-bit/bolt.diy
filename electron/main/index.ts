@@ -142,9 +142,7 @@ declare global {
             : err,
       });
 
-      const error = err instanceof Error ? err : new Error(String(err));
-
-      return new Response(`Error handling request to ${req.url}: ${error.stack ?? error.message}`, {
+      return new Response('Error handling request', {
         status: 500,
         headers: { 'content-type': 'text/plain' },
       });

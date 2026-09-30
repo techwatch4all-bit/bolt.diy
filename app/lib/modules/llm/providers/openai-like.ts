@@ -19,13 +19,17 @@ export default class OpenAILikeProvider extends BaseProvider {
     settings?: IProviderSetting,
     serverEnv: Record<string, string> = {},
   ): Promise<ModelInfo[]> {
-    const { baseUrl, apiKey } = this.getProviderBaseUrlAndKey({
+    const { baseUrl, apiKey, baseUrlSource, apiKeySource } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: settings,
       serverEnv,
       defaultBaseUrlKey: 'OPENAI_LIKE_API_BASE_URL',
       defaultApiTokenKey: 'OPENAI_LIKE_API_KEY',
     });
+
+    if (apiKeySource === 'env' && baseUrlSource === 'user') {
+      return [];
+    }
 
     if (!baseUrl || !apiKey) {
       return [];
@@ -37,7 +41,15 @@ export default class OpenAILikeProvider extends BaseProvider {
       },
     });
 
+    if (!response.ok) {
+      return [];
+    }
+
     const res = (await response.json()) as any;
+
+    if (!Array.isArray(res?.data)) {
+      return [];
+    }
 
     return res.data.map((model: any) => ({
       name: model.id,

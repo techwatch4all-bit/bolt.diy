@@ -29,16 +29,24 @@ export interface SupabaseConnectionState {
 const savedConnection = typeof localStorage !== 'undefined' ? localStorage.getItem('supabase_connection') : null;
 const savedCredentials = typeof localStorage !== 'undefined' ? localStorage.getItem('supabaseCredentials') : null;
 
-const initialState: SupabaseConnectionState = savedConnection
-  ? JSON.parse(savedConnection)
-  : {
-      user: null,
-      token: '',
-      stats: undefined,
-      selectedProjectId: undefined,
-      isConnected: false,
-      project: undefined,
-    };
+let parsedConnection: SupabaseConnectionState | undefined;
+
+if (savedConnection) {
+  try {
+    parsedConnection = JSON.parse(savedConnection);
+  } catch (e) {
+    console.error('Failed to parse saved connection:', e);
+  }
+}
+
+const initialState: SupabaseConnectionState = parsedConnection || {
+  user: null,
+  token: '',
+  stats: undefined,
+  selectedProjectId: undefined,
+  isConnected: false,
+  project: undefined,
+};
 
 if (savedCredentials && !initialState.credentials) {
   try {

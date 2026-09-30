@@ -16,27 +16,38 @@ export const loader: LoaderFunction = async ({ context, request }) => {
   // Create a comprehensive API keys object
   const apiKeys: Record<string, string> = { ...apiKeysFromCookie };
 
-  // For each provider, check all possible sources for API keys
-  for (const provider of providers) {
-    if (!provider.config.apiTokenKey) {
-      continue;
-    }
+  /*
+   * For each provider, check all possible sources for API keys.
+   * This exposes env-derived keys, so it is gated behind an opt-out flag.
+   * Public deployments should set ALLOW_EXPORT_API_KEYS='false' to disable this.
+   */
+  const allowExportApiKeys =
+    (context?.cloudflare?.env as Record<string, any>)?.ALLOW_EXPORT_API_KEYS ??
+    process.env.ALLOW_EXPORT_API_KEYS ??
+    'true';
 
-    const envVarName = provider.config.apiTokenKey;
+  if (allowExportApiKeys !== 'false') {
+    for (const provider of providers) {
+      if (!provider.config.apiTokenKey) {
+        continue;
+      }
 
-    // Skip if we already have this provider's key from cookies
-    if (apiKeys[provider.name]) {
-      continue;
-    }
+      const envVarName = provider.config.apiTokenKey;
 
-    // Check environment variables in order of precedence
-    const envValue =
-      (context?.cloudflare?.env as Record<string, any>)?.[envVarName] ||
-      process.env[envVarName] ||
-      llmManager.env[envVarName];
+      // Skip if we already have this provider's key from cookies
+      if (apiKeys[provider.name]) {
+        continue;
+      }
 
-    if (envValue) {
-      apiKeys[provider.name] = envValue;
+      // Check environment variables in order of precedence
+      const envValue =
+        (context?.cloudflare?.env as Record<string, any>)?.[envVarName] ||
+        process.env[envVarName] ||
+        llmManager.env[envVarName];
+
+      if (envValue) {
+        apiKeys[provider.name] = envValue;
+      }
     }
   }
 

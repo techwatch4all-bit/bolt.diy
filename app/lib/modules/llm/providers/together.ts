@@ -38,20 +38,21 @@ export default class TogetherProvider extends BaseProvider {
     settings?: IProviderSetting,
     serverEnv: Record<string, string> = {},
   ): Promise<ModelInfo[]> {
-    const { baseUrl: fetchBaseUrl, apiKey } = this.getProviderBaseUrlAndKey({
+    const { baseUrl, apiKey, baseUrlSource, apiKeySource } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: settings,
       serverEnv,
       defaultBaseUrlKey: 'TOGETHER_API_BASE_URL',
       defaultApiTokenKey: 'TOGETHER_API_KEY',
     });
-    const baseUrl = fetchBaseUrl || 'https://api.together.xyz/v1';
+
+    if (apiKeySource === 'env' && baseUrlSource === 'user') {
+      return [];
+    }
 
     if (!baseUrl || !apiKey) {
       return [];
     }
-
-    // console.log({ baseUrl, apiKey });
 
     const response = await fetch(`${baseUrl}/models`, {
       headers: {
@@ -59,8 +60,17 @@ export default class TogetherProvider extends BaseProvider {
       },
     });
 
+    if (!response.ok) {
+      return [];
+    }
+
     const res = (await response.json()) as any;
-    const data = (res || []).filter((model: any) => model.type === 'chat');
+
+    if (!Array.isArray(res?.data)) {
+      return [];
+    }
+
+    const data = res.data.filter((model: any) => model.type === 'chat');
 
     return data.map((m: any) => ({
       name: m.id,

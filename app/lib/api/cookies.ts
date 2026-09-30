@@ -1,3 +1,7 @@
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('cookies');
+
 export function parseCookies(cookieHeader: string | null) {
   const cookies: Record<string, string> = {};
 
@@ -13,8 +17,21 @@ export function parseCookies(cookieHeader: string | null) {
 
     if (name && rest.length > 0) {
       // Decode the name and value, and join value parts in case it contains '='
-      const decodedName = decodeURIComponent(name.trim());
-      const decodedValue = decodeURIComponent(rest.join('=').trim());
+      let decodedName: string;
+      let decodedValue: string;
+
+      try {
+        decodedName = decodeURIComponent(name.trim());
+      } catch {
+        decodedName = name.trim();
+      }
+
+      try {
+        decodedValue = decodeURIComponent(rest.join('=').trim());
+      } catch {
+        decodedValue = rest.join('=').trim();
+      }
+
       cookies[decodedName] = decodedValue;
     }
   });
@@ -24,10 +41,30 @@ export function parseCookies(cookieHeader: string | null) {
 
 export function getApiKeysFromCookie(cookieHeader: string | null): Record<string, string> {
   const cookies = parseCookies(cookieHeader);
-  return cookies.apiKeys ? JSON.parse(cookies.apiKeys) : {};
+
+  if (!cookies.apiKeys) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(cookies.apiKeys);
+  } catch (error) {
+    logger.warn('Failed to parse apiKeys cookie:', error);
+    return {};
+  }
 }
 
 export function getProviderSettingsFromCookie(cookieHeader: string | null): Record<string, any> {
   const cookies = parseCookies(cookieHeader);
-  return cookies.providers ? JSON.parse(cookies.providers) : {};
+
+  if (!cookies.providers) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(cookies.providers);
+  } catch (error) {
+    logger.warn('Failed to parse providers cookie:', error);
+    return {};
+  }
 }

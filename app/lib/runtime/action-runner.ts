@@ -307,6 +307,11 @@ export class ActionRunner {
     const webcontainer = await this.#webcontainer;
     const relativePath = nodePath.relative(webcontainer.workdir, action.filePath);
 
+    if (relativePath.startsWith('..') || nodePath.isAbsolute(relativePath)) {
+      logger.error('Invalid file path\n\n', action.filePath);
+      throw new ActionCommandError('Invalid file path', 'File path escapes project directory');
+    }
+
     let folder = nodePath.dirname(relativePath);
 
     // remove trailing slashes

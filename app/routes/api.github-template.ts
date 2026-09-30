@@ -5,8 +5,8 @@ export async function loader({ request }: { request: Request }) {
   const url = new URL(request.url);
   const repo = url.searchParams.get('repo');
 
-  if (!repo) {
-    return json({ error: 'Repository name is required' }, { status: 400 });
+  if (!repo || !/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/.test(repo)) {
+    return json({ error: 'Invalid repository format' }, { status: 400 });
   }
 
   try {

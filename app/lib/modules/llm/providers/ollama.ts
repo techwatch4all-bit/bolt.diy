@@ -64,13 +64,23 @@ export default class OllamaProvider extends BaseProvider {
     settings?: IProviderSetting,
     serverEnv: Record<string, string> = {},
   ): Promise<ModelInfo[]> {
-    let { baseUrl } = this.getProviderBaseUrlAndKey({
+    const {
+      baseUrl: resolvedBaseUrl,
+      baseUrlSource,
+      apiKeySource,
+    } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: settings,
       serverEnv,
       defaultBaseUrlKey: 'OLLAMA_API_BASE_URL',
       defaultApiTokenKey: '',
     });
+
+    let baseUrl = resolvedBaseUrl;
+
+    if (apiKeySource === 'env' && baseUrlSource === 'user') {
+      return [];
+    }
 
     if (!baseUrl) {
       throw new Error('No baseUrl found for OLLAMA provider');
@@ -88,9 +98,12 @@ export default class OllamaProvider extends BaseProvider {
     }
 
     const response = await fetch(`${baseUrl}/api/tags`);
-    const data = (await response.json()) as OllamaApiResponse;
 
-    // console.log({ ollamamodels: data.models });
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = (await response.json()) as OllamaApiResponse;
 
     return data.models.map((model: OllamaModel) => ({
       name: model.name,

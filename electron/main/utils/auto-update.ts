@@ -91,7 +91,7 @@ export async function setupAutoUpdater() {
   }
 
   // Set up periodic update checks (every 4 hours)
-  setInterval(
+  const updateCheckInterval = setInterval(
     () => {
       autoUpdater.checkForUpdates().catch((err) => {
         logger.error('Periodic update check failed:', err);
@@ -99,6 +99,10 @@ export async function setupAutoUpdater() {
     },
     4 * 60 * 60 * 1000,
   );
+
+  app.on('will-quit', () => {
+    clearInterval(updateCheckInterval);
+  });
 }
 
 function formatUpdateDownloadedEvent(event: UpdateDownloadedEvent): string {

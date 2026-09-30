@@ -48,9 +48,30 @@ export abstract class BaseProvider implements ProviderInfo {
     const apiKey =
       apiKeys?.[this.name] || serverEnv?.[apiTokenKey] || process?.env?.[apiTokenKey] || manager.env?.[apiTokenKey];
 
+    // Determine sources
+    let baseUrlSource: 'user' | 'env' | 'default' = 'default';
+
+    if (settingsBaseUrl) {
+      baseUrlSource = 'user';
+    } else if (serverEnv?.[baseUrlKey] || process?.env?.[baseUrlKey] || manager.env?.[baseUrlKey]) {
+      baseUrlSource = 'env';
+    } else if (this.config.baseUrl) {
+      baseUrlSource = 'default';
+    }
+
+    let apiKeySource: 'user' | 'env' = 'env';
+
+    if (apiKeys?.[this.name]) {
+      apiKeySource = 'user';
+    } else if (serverEnv?.[apiTokenKey] || process?.env?.[apiTokenKey] || manager.env?.[apiTokenKey]) {
+      apiKeySource = 'env';
+    }
+
     return {
       baseUrl,
       apiKey,
+      baseUrlSource,
+      apiKeySource,
     };
   }
   getModelsFromCache(options: {

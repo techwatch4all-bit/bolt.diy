@@ -23,13 +23,23 @@ export default class LMStudioProvider extends BaseProvider {
     settings?: IProviderSetting,
     serverEnv: Record<string, string> = {},
   ): Promise<ModelInfo[]> {
-    let { baseUrl } = this.getProviderBaseUrlAndKey({
+    const {
+      baseUrl: resolvedBaseUrl,
+      baseUrlSource,
+      apiKeySource,
+    } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: settings,
       serverEnv,
       defaultBaseUrlKey: 'LMSTUDIO_API_BASE_URL',
       defaultApiTokenKey: '',
     });
+
+    let baseUrl = resolvedBaseUrl;
+
+    if (apiKeySource === 'env' && baseUrlSource === 'user') {
+      return [];
+    }
 
     if (!baseUrl) {
       throw new Error('No baseUrl found for LMStudio provider');
@@ -47,6 +57,11 @@ export default class LMStudioProvider extends BaseProvider {
     }
 
     const response = await fetch(`${baseUrl}/v1/models`);
+
+    if (!response.ok) {
+      return [];
+    }
+
     const data = (await response.json()) as { data: Array<{ id: string }> };
 
     return data.data.map((model) => ({
