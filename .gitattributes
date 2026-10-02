@@ -1,0 +1,23 @@
+# Normalize line endings in the repository so that checkouts are identical
+# on every platform. Without this, core.autocrlf=true on Windows rewrites
+# every text file to CRLF while the repository stores LF, and the ESLint
+# linebreak-style rule fails the pre-commit hook with one error per line.
+* text=auto eol=lf
+
+# Binary assets must never be touched by the eol conversion above.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.mp4 binary
+*.webm binary
+*.pdf binary
+*.zip binary
+*.gz binary
